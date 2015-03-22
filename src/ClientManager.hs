@@ -60,30 +60,32 @@ worker :: ClientServer -> IO()
 worker server = loop (ServerState empty) where
     loop state = do
         msg <- atomically $ readTChan (serverChan server)
-        (continue, newState) <- atomically $ handleInput state msg
+        (continue, newState) <- handleInput state msg
         when continue $ loop newState
 
 
-handleInput :: ServerState -> InputMessage -> STM (Bool, ServerState)
+handleInput :: ServerState -> InputMessage -> IO (Bool, ServerState)
 
 handleInput state Hello{..} = do
+    putStrLn $ "Log in user: " ++ clientName client
     let newState = ServerState { clients = insert (clientName client) client (clients state) }
     return (True, newState)
 
 handleInput state Close{..} = do
+    putStrLn $ "Log off user: " ++ from
     let newState = ServerState { clients = delete from (clients state) }
     return (True, newState)
 
 handleInput state Tell{..} = do
     let found = Data.Map.lookup to (clients state)
-    when (isJust found) $ sendToClient (fromJust found) from text 
+    when (isJust found) $ atomically $ sendToClient (fromJust found) from text 
     return (True, state)
 
 handleInput state BroadCast{..} = do
-    mapM_ (\c -> sendToClient c from text) $ elems (clients state)
+    atomically $ mapM_ (\c -> sendToClient c from text) $ elems (clients state)
     return (True, state)
 
 handleInput state ServerShut = do
-    mapM_ closeClient $ elems (clients state)
+    atomically $ mapM_ closeClient $ elems (clients state)
     return (False, state)
 
