@@ -1,0 +1,1 @@
+.dist-buildwrapper\dist\build\ChatServerHaskell\ChatServerHaskell.exe 10000 +RTS -N4

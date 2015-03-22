@@ -60,11 +60,10 @@ clientSetup server socket = do
 
 
 clientLoop :: (IManager server) => ClientConnection -> server -> Handle -> IO ()
-clientLoop this server socket = race sendLoop receiveLoop >> return () where
+clientLoop this server socket = void $ race sendLoop receiveLoop where
     chan = inputChan this
     receiveLoop = do
-        msg <- hGetLine socket
-        putStrLn $ "Message received: " ++ msg
+        msg <- hGetLine socket --TODO handle exception ? socket broken suddenly?
         continue <- handleMessage (clientName this) server msg
         when continue receiveLoop
     sendLoop = do

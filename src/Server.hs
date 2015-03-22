@@ -3,6 +3,7 @@ module Server (runServer) where
 import Control.Exception
 import Control.Monad
 import Network
+import System.IO
 
 import AutoCloseable
 import ClientConnection
@@ -24,6 +25,7 @@ serverLoop :: Socket -> ClientServer -> IO()
 serverLoop socketServer clientManager =
     forever $ do
         (h, _, _) <- accept socketServer
+        hSetBuffering h LineBuffering
         newClient clientManager h
 
 
