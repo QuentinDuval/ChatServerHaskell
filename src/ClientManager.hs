@@ -66,7 +66,7 @@ worker server = loop (ServerState empty) where
 
 handleInput :: ServerState -> InputMessage -> IO (Bool, ServerState)
 
-handleInput state Hello{..} = do
+handleInput state Hello{..} = do -- TODO take into account duplicate clients
     putStrLn $ "Log in user: " ++ clientName client
     let newState = ServerState { clients = insert (clientName client) client (clients state) }
     return (True, newState)
