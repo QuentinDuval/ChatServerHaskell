@@ -62,6 +62,7 @@ clientLoop :: (IManager server) => ClientConnection -> server -> Handle -> IO ()
 clientLoop this server socket = loop where
     chan = inputChan this
     loop = do
+        -- TODO causes a big issue: if we do not find a TChan, we block...
         emptyChan <- atomically $ isEmptyTChan chan
         if emptyChan
             then do
