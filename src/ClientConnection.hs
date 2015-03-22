@@ -50,8 +50,8 @@ clientSetup :: (IManager server) => server -> Handle -> IO ()
 clientSetup server socket = do
     msg <- hGetLine socket
     when ("/hello " `isPrefixOf` msg) $ do
-        let clientName = drop (length "/hello ") msg
-        print $ "User: " ++ clientName ++ " just logged in."
+        let clientName = init $ drop (length "/hello ") msg
+        print ("User: " ++ clientName ++ " just logged in.")
         chan <- atomically newTChan
         let connection = ClientConnection clientName chan
         atomically $ addClient server connection
@@ -66,6 +66,7 @@ clientLoop this server socket = loop where
         if emptyChan
             then do
                 msg <- hGetLine socket
+                putStrLn $ "Message received: " ++ msg
                 continue <- handleMessage (clientName this) server msg
                 when continue loop
             else do
@@ -75,11 +76,12 @@ clientLoop this server socket = loop where
 
 
 sendMessage :: Handle -> OutputMessage -> IO Bool
-sendMessage socket Message{..} = do 
-    hPrint socket $ "/message " ++ from ++ " " ++ text ++ "\n"
+sendMessage socket Message{..} = do
+    let message = "/message " ++ from ++ " " ++ text
+    hPutStrLn socket message
     return True
 sendMessage socket Shut = do
-    hPrint socket "/shut\n"
+    hPutStrLn socket "/shut"
     return False
 
 
@@ -87,15 +89,16 @@ handleMessage :: (IManager server) => String -> server -> String -> IO Bool
 handleMessage src server msg
 
     | "/tell " `isPrefixOf` msg = do
-        let broadMsg = drop (length "/tell ") msg
-        let spaceIdx = elemIndex ' ' broadMsg
+        let tellMsg = init $ drop (length "/tell ") msg
+        let spaceIdx = elemIndex ' ' tellMsg
         when (isJust spaceIdx) $ do
-            let (dst, txt) = splitAt (fromJust spaceIdx) broadMsg
+            let (dst, txt) = splitAt (fromJust spaceIdx) tellMsg
             atomically $ tell server src dst txt
         return True
     
     | "/broadcast " `isPrefixOf` msg = do
-        atomically $ broadcast server src (drop (length "/broadcast ") msg)
+        let txt = init $ drop (length "/broadcast ") msg
+        atomically $ broadcast server src txt
         return True
     
     | "/shut" `isPrefixOf` msg = do

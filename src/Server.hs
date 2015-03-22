@@ -14,7 +14,7 @@ import ClientManager
 runServer :: Int -> IO()
 runServer port = withSocketsDo $ withListenOn port $
     \socketServer -> do
-        print $ "Listening on port: " ++ show port
+        putStrLn $ "Listening on port: " ++ show port
         tryWith $ serverLoop socketServer
 
 
