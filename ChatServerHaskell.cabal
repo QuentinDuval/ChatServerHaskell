@@ -1,0 +1,22 @@
+name:           ChatServerHaskell
+version:        0.1
+cabal-version:  >=1.2
+build-type:     Simple
+author:         DuvalQuentin
+
+executable ChatServerHaskell
+  hs-source-dirs:  src
+  main-is:         Main.hs
+  build-depends:   
+                   base >= 4,
+                   network >=2.4 && <2.5,
+                   stm >=2.4 && <2.5,
+                   containers >=0.5 && <0.6
+  ghc-options:     -Wall
+  other-modules:   
+                   Server,
+                   ClientConnection,
+                   ClientManager,
+                   AutoCloseable
+  extensions:      RecordWildCards
+
