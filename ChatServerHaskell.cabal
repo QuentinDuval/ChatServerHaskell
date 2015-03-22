@@ -19,5 +19,7 @@ executable ChatServerHaskell
                    ClientConnection,
                    ClientManager,
                    AutoCloseable
-  extensions:      RecordWildCards
+  extensions:      
+                   BangPatterns, 
+                   RecordWildCards
 

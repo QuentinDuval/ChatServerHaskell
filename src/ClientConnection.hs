@@ -11,6 +11,7 @@ where
 import Control.Concurrent
 import Control.Concurrent.Async
 import Control.Concurrent.STM
+import Control.Exception
 import Control.Monad
 import Data.List
 import Data.Maybe
@@ -34,9 +35,7 @@ class IManager server where
 
 
 newClient :: (IManager m) => m -> Handle -> IO()
-newClient server handle = do
-    _ <- forkFinally (clientSetup server handle) (\_ -> hClose handle)
-    return ()
+newClient server h = void $ forkFinally (clientSetup server h) (\_ -> hClose h)
 
 closeClient :: ClientConnection -> STM()
 closeClient client = writeTChan (inputChan client) Shut
@@ -54,8 +53,10 @@ clientSetup server socket = do
         chan <- atomically newTChan
         let clientName = init $ drop (length "/hello ") msg
         let connection = ClientConnection clientName chan
-        atomically $ addClient server connection
-        clientLoop connection server socket
+        bracket_
+            (atomically $ addClient server connection)
+            (atomically $ removeClient server clientName)
+            (clientLoop connection server socket)
 
 
 clientLoop :: (IManager server) => ClientConnection -> server -> Handle -> IO ()
@@ -63,11 +64,11 @@ clientLoop this server socket = void $ race sendLoop receiveLoop where
     chan = inputChan this
     receiveLoop = do
         msg <- hGetLine socket --TODO handle exception ? socket broken suddenly?
-        continue <- handleMessage (clientName this) server msg
+        !continue <- handleMessage (clientName this) server msg
         when continue receiveLoop
     sendLoop = do
         msg <- atomically $ readTChan chan
-        continue <- sendMessage socket msg
+        !continue <- sendMessage socket msg
         when continue sendLoop
 
 
@@ -97,10 +98,5 @@ handleMessage src server msg
         atomically $ broadcast server src txt
         return True
     
-    | "/shut" `isPrefixOf` msg = do
-        atomically $ removeClient server src
-        return False
-    
-    | otherwise = do 
-        print ("Invalid message received " ++ msg ++ "\n")
-        return True
+    | "/shut" `isPrefixOf` msg = return False
+    | otherwise = return True
