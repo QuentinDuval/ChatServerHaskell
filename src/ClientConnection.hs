@@ -9,6 +9,7 @@ module ClientConnection
 where
 
 import Control.Concurrent
+import Control.Concurrent.Async
 import Control.Concurrent.STM
 import Control.Monad
 import Data.List
@@ -62,16 +63,14 @@ clientLoop :: (IManager server) => ClientConnection -> server -> Handle -> IO ()
 clientLoop this server socket = loop where
     chan = inputChan this
     loop = do
-        -- TODO causes a big issue: if we do not find a TChan, we block...
-        emptyChan <- atomically $ isEmptyTChan chan
-        if emptyChan
-            then do
-                msg <- hGetLine socket
+        -- TODO: race between two threads
+        task <- race (hGetLine socket) (atomically $ readTChan chan)
+        case task of
+            Left msg -> do
                 putStrLn $ "Message received: " ++ msg
                 continue <- handleMessage (clientName this) server msg
                 when continue loop
-            else do
-                msg <- atomically $ readTChan chan
+            Right msg -> do
                 continue <- sendMessage socket msg
                 when continue loop
 

@@ -11,7 +11,8 @@ executable ChatServerHaskell
                    base >= 4,
                    network >=2.4 && <2.5,
                    stm >=2.4 && <2.5,
-                   containers >=0.5 && <0.6
+                   containers >=0.5 && <0.6,
+                   async >=2.0 && <2.1
   ghc-options:     -Wall -O2 -threaded -rtsopts
   other-modules:   
                    Server,
