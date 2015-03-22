@@ -60,19 +60,17 @@ clientSetup server socket = do
 
 
 clientLoop :: (IManager server) => ClientConnection -> server -> Handle -> IO ()
-clientLoop this server socket = loop where
+clientLoop this server socket = race sendLoop receiveLoop >> return () where
     chan = inputChan this
-    loop = do
-        -- TODO: race between two threads
-        task <- race (hGetLine socket) (atomically $ readTChan chan)
-        case task of
-            Left msg -> do
-                putStrLn $ "Message received: " ++ msg
-                continue <- handleMessage (clientName this) server msg
-                when continue loop
-            Right msg -> do
-                continue <- sendMessage socket msg
-                when continue loop
+    receiveLoop = do
+        msg <- hGetLine socket
+        putStrLn $ "Message received: " ++ msg
+        continue <- handleMessage (clientName this) server msg
+        when continue receiveLoop
+    sendLoop = do
+        msg <- atomically $ readTChan chan
+        continue <- sendMessage socket msg
+        when continue sendLoop
 
 
 sendMessage :: Handle -> OutputMessage -> IO Bool
