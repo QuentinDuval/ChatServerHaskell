@@ -50,8 +50,10 @@ clientSetup :: (IManager server) => server -> Handle -> IO ()
 clientSetup server socket = do
     msg <- hGetLine socket
     when ("/hello " `isPrefixOf` msg) $ do
+        let clientName = drop (length "/hello ") msg
+        print $ "User: " ++ clientName ++ " just logged in."
         chan <- atomically newTChan
-        let connection = ClientConnection (drop (length "/hello ") msg) chan
+        let connection = ClientConnection clientName chan
         atomically $ addClient server connection
         clientLoop connection server socket
 

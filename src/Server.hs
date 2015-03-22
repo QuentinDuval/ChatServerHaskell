@@ -9,12 +9,16 @@ import ClientConnection
 import ClientManager
 
 
+-- ^ Public methods
+
 runServer :: Int -> IO()
 runServer port = withSocketsDo $ withListenOn port $
     \socketServer -> do
-        print $ "Listening on port: " ++ show port ++ "\n"
+        print $ "Listening on port: " ++ show port
         tryWith $ serverLoop socketServer
 
+
+-- ^ Private methods
 
 serverLoop :: Socket -> ClientServer -> IO()
 serverLoop socketServer clientManager =
