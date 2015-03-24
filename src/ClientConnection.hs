@@ -53,7 +53,7 @@ clientSetup server socket = do
         chan <- atomically newTChan
         let clientName = init $ drop (length "/hello ") msg
         let connection = ClientConnection clientName chan
-        --TODO check invalid names or already logged names atomically otherwise...
+        --TODO check invalid names or already logged names atomically... have a login service
         bracket_
             (atomically $ addClient server connection)
             (atomically $ removeClient server clientName)
