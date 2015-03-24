@@ -48,7 +48,7 @@ data OutputMessage = Message { from :: String, text :: String} | Shut
 
 clientSetup :: (IManager server) => server -> Handle -> IO ()
 clientSetup server socket = do
-    msg <- hGetLine socket
+    msg <- hGetLine socket --TODO handle exception of socket broken suddently
     when ("/hello " `isPrefixOf` msg) $ do
         chan <- atomically newTChan
         let clientName = init $ drop (length "/hello ") msg
@@ -63,7 +63,7 @@ clientLoop :: (IManager server) => ClientConnection -> server -> Handle -> IO ()
 clientLoop this server socket = void $ race sendLoop receiveLoop where
     chan = inputChan this
     receiveLoop = do
-        msg <- hGetLine socket --TODO handle exception ? socket broken suddenly?
+        msg <- hGetLine socket --TODO handle exception ? socket broken suddenly
         !continue <- handleMessage (clientName this) server msg
         when continue receiveLoop
     sendLoop = do
