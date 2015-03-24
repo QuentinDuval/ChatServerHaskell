@@ -21,7 +21,7 @@ import AutoCloseable
 import ClientConnection
 
 
--- ^ Public methods
+-- ^ Public data and function
 
 data ClientServer = ClientServer { serverChan :: TChan InputMessage };
 
@@ -45,7 +45,7 @@ instance IManager ClientServer where
     broadcast server src content = writeTChan (serverChan server) (BroadCast src content)
 
 
--- ^ Private methods
+-- ^ Private data and function
 
 data InputMessage
     = Hello     { client :: ClientConnection }

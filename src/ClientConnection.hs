@@ -18,9 +18,7 @@ import Data.Maybe
 import System.IO
 
 
--- ^ Public methods
-
-data OutputMessage = Message { from :: String, text :: String} | Shut
+-- ^ Public data and function
 
 data ClientConnection = ClientConnection {
     clientName  :: String,
@@ -44,7 +42,9 @@ sendToClient :: ClientConnection -> String -> String -> STM()
 sendToClient client src text = writeTChan (inputChan client) (Message src text)
 
 
--- ^ Private methods
+-- ^ Private data and function
+
+data OutputMessage = Message { from :: String, text :: String} | Shut
 
 clientSetup :: (IManager server) => server -> Handle -> IO ()
 clientSetup server socket = do

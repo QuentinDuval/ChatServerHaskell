@@ -10,7 +10,7 @@ import ClientConnection
 import ClientManager
 
 
--- ^ Public methods
+-- ^ Public data and function
 
 runServer :: Int -> IO()
 runServer port = withSocketsDo $ withListenOn port $
@@ -19,7 +19,7 @@ runServer port = withSocketsDo $ withListenOn port $
         tryWith $ serverLoop socketServer
 
 
--- ^ Private methods
+-- ^ Private data and function
 
 serverLoop :: Socket -> ClientServer -> IO()
 serverLoop socketServer clientManager =
