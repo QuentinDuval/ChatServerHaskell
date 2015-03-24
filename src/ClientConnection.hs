@@ -51,8 +51,9 @@ clientSetup server socket = do
     msg <- hGetLine socket --TODO handle exception of socket broken suddenly
     when ("/hello " `isPrefixOf` msg) $ do
         chan <- atomically newTChan
-        let clientName = init $ drop (length "/hello ") msg --TODO check invalid names
+        let clientName = init $ drop (length "/hello ") msg
         let connection = ClientConnection clientName chan
+        --TODO check invalid names or already logged names atomically otherwise...
         bracket_
             (atomically $ addClient server connection)
             (atomically $ removeClient server clientName)
