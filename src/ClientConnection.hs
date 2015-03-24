@@ -48,10 +48,10 @@ data OutputMessage = Message { from :: String, text :: String} | Shut
 
 clientSetup :: (IManager server) => server -> Handle -> IO ()
 clientSetup server socket = do
-    msg <- hGetLine socket --TODO handle exception of socket broken suddently
+    msg <- hGetLine socket --TODO handle exception of socket broken suddenly
     when ("/hello " `isPrefixOf` msg) $ do
         chan <- atomically newTChan
-        let clientName = init $ drop (length "/hello ") msg
+        let clientName = init $ drop (length "/hello ") msg --TODO check invalid names
         let connection = ClientConnection clientName chan
         bracket_
             (atomically $ addClient server connection)
