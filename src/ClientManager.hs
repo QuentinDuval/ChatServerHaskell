@@ -82,10 +82,10 @@ handleInput state Tell{..} = do
     return (True, state)
 
 handleInput state BroadCast{..} = do
-    atomically $ mapM_ (\c -> sendToClient c from text) $ elems (clients state)
+    mapM_ (\c -> atomically $ sendToClient c from text) $ elems (clients state)
     return (True, state)
 
 handleInput state ServerShut = do
-    atomically $ mapM_ closeClient $ elems (clients state)
+    mapM_ (atomically . closeClient) $ elems (clients state)
     return (False, state)
 
