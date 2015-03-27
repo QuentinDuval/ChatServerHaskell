@@ -26,11 +26,11 @@ loginAttempt this name = do
 logout :: Login -> String -> IO()
 logout this name = atomically $ writeTChan (requestChan this) $ LogoutReq name
 
+
 -- ^ Private data and functions
 
 loginHandler :: TChan Request -> IO ()
 loginHandler chan = loop empty where
-    loop :: Set String -> IO()
     loop names = undefined
 
 
