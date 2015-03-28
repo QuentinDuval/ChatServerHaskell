@@ -17,6 +17,8 @@ import Data.List
 import Data.Maybe
 import System.IO
 
+import Login
+
 
 -- ^ Public data and function
 
@@ -32,8 +34,8 @@ class IManager server where
     broadcast ::    server -> String -> String -> STM()
 
 
-newClient :: (IManager m) => m -> Handle -> IO()
-newClient server h = void $ forkFinally (clientSetup server h) (\_ -> hClose h)
+newClient :: (IManager m) => Login -> m -> Handle -> IO()
+newClient login server h = void $ forkFinally (clientSetup login server h) (\_ -> hClose h)
 
 closeClient :: ClientConnection -> STM()
 closeClient client = writeTChan (inputChan client) Shut
@@ -46,18 +48,22 @@ sendToClient client src text = writeTChan (inputChan client) (Message src text)
 
 data OutputMessage = Message { from :: String, text :: String} | Shut
 
-clientSetup :: (IManager server) => server -> Handle -> IO ()
-clientSetup server socket = do
+clientSetup :: (IManager server) => Login -> server -> Handle -> IO ()
+clientSetup login server socket = do
     msg <- hGetLine socket --TODO handle exception of socket broken suddenly
     when ("/hello " `isPrefixOf` msg) $ do
-        chan <- atomically newTChan
         let clientName = init $ drop (length "/hello ") msg
-        let connection = ClientConnection clientName chan
-        --TODO check invalid names or already logged names atomically... have a login service
-        bracket_
-            (atomically $ addClient server connection)
-            (atomically $ removeClient server clientName)
-            (clientLoop connection server socket)
+        successfulLogin <- loginAttempt login clientName
+        if successfulLogin
+            then do
+                chan <- atomically newTChan
+                let connection = ClientConnection clientName chan
+                bracket_
+                    (atomically (addClient server connection))
+                    (atomically (removeClient server clientName) >> logout login clientName)
+                    (clientLoop connection server socket)
+            else
+                void $ sendMessage socket Shut
 
 
 clientLoop :: (IManager server) => ClientConnection -> server -> Handle -> IO ()

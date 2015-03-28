@@ -8,6 +8,7 @@ import System.IO
 import AutoCloseable
 import ClientConnection
 import ClientManager
+import Login
 
 
 -- ^ Public data and function
@@ -22,11 +23,12 @@ runServer port = withSocketsDo $ withListenOn port $
 -- ^ Private data and function
 
 serverLoop :: Socket -> ClientServer -> IO()
-serverLoop socketServer clientManager =
+serverLoop socketServer clientManager = do
+    login <- newLogin
     forever $ do
         (h, _, _) <- accept socketServer
         hSetBuffering h LineBuffering
-        newClient clientManager h
+        newClient login clientManager h
 
 
 withListenOn :: Int -> (Socket -> IO a) -> IO a
