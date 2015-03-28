@@ -1,4 +1,11 @@
-module Login where
+module Login
+(
+    Login,
+    newLogin,
+    loginAttempt,
+    logout
+)
+where
 
 import Control.Concurrent
 import Control.Concurrent.STM
@@ -9,7 +16,6 @@ import Data.Set
 -- ^ Public data and functions
 
 data Login = Login { requestChan :: TChan Request };
-data Request = LoginReq String (TChan Bool) | LogoutReq String
 
 newLogin :: IO Login
 newLogin = do
@@ -28,6 +34,8 @@ logout this name = atomically $ writeTChan (requestChan this) $ LogoutReq name
 
 
 -- ^ Private data and functions
+
+data Request = LoginReq String (TChan Bool) | LogoutReq String
 
 loginHandler :: TChan Request -> IO ()
 loginHandler chan = loop empty where

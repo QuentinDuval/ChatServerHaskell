@@ -1,4 +1,5 @@
-module ChatManager (
+module ChatManager
+(
     ChatManager,
     newServer,
     closeServer,
