@@ -31,6 +31,12 @@ logout this name = atomically $ writeTChan (requestChan this) $ LogoutReq name
 
 loginHandler :: TChan Request -> IO ()
 loginHandler chan = loop empty where
-    loop names = undefined
+    loop names = do
+        request <- atomically $ readTChan chan
+        case request of
+            LogoutReq name -> loop (delete name names)
+            LoginReq name answerChan -> do
+                atomically $ writeTChan answerChan (notMember name names)
+                loop (insert name names)
 
 
