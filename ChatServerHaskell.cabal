@@ -17,9 +17,9 @@ executable ChatServerHaskell
   other-modules:   
                    Server,
                    ClientConnection,
-                   ClientManager,
                    AutoCloseable,
-                   Login
+                   Login,
+                   ChatManager
   extensions:      
                    BangPatterns, 
                    RecordWildCards

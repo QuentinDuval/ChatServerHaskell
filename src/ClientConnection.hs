@@ -16,7 +16,6 @@ import Control.Monad
 import Data.List
 import Data.Maybe
 import System.IO
-
 import Login
 
 
@@ -55,15 +54,18 @@ clientSetup login server socket = do
         let clientName = init $ drop (length "/hello ") msg
         successfulLogin <- loginAttempt login clientName
         if successfulLogin
-            then do
-                chan <- atomically newTChan
-                let connection = ClientConnection clientName chan
-                bracket_
-                    (atomically (addClient server connection))
-                    (atomically (removeClient server clientName) >> logout login clientName)
-                    (clientLoop connection server socket)
-            else
-                void $ sendMessage socket Shut
+            then clientLoopInit login server socket clientName
+            else void $ sendMessage socket Shut
+
+
+clientLoopInit :: (IManager server) => Login -> server -> Handle -> String -> IO()
+clientLoopInit login server socket clientName = do
+    chan <- atomically newTChan
+    let connection = ClientConnection clientName chan
+    bracket_
+        (atomically $ addClient server connection)
+        (do atomically $ removeClient server clientName; logout login clientName)
+        (clientLoop connection server socket)
 
 
 clientLoop :: (IManager server) => ClientConnection -> server -> Handle -> IO ()

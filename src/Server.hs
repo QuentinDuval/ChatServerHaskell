@@ -7,7 +7,7 @@ import System.IO
 
 import AutoCloseable
 import ClientConnection
-import ClientManager
+import ChatManager
 import Login
 
 
@@ -22,7 +22,7 @@ runServer port = withSocketsDo $ withListenOn port $
 
 -- ^ Private data and function
 
-serverLoop :: Socket -> ClientServer -> IO()
+serverLoop :: Socket -> ChatManager -> IO()
 serverLoop socketServer clientManager = do
     login <- newLogin
     forever $ do

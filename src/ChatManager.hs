@@ -1,5 +1,5 @@
-module ClientManager (
-    ClientServer,
+module ChatManager (
+    ChatManager,
     newServer,
     closeServer,
     addClient,
@@ -23,22 +23,22 @@ import ClientConnection
 
 -- ^ Public data and function
 
-data ClientServer = ClientServer { serverChan :: TChan InputMessage };
+data ChatManager = ChatManager { serverChan :: TChan InputMessage };
 
-newServer :: IO ClientServer
+newServer :: IO ChatManager
 newServer = do
     chan <- atomically newTChan
-    let server = ClientServer chan
+    let server = ChatManager chan
     _ <- forkIO $ worker server
     return server
 
-closeServer :: ClientServer -> STM() 
+closeServer :: ChatManager -> STM() 
 closeServer server = writeTChan (serverChan server) ServerShut
 
-instance AutoCloseable ClientServer where
+instance AutoCloseable ChatManager where
     tryWith = bracket newServer (atomically . closeServer)
 
-instance IManager ClientServer where
+instance IManager ChatManager where
     addClient server client      = writeTChan (serverChan server) (Hello client)
     removeClient server name     = writeTChan (serverChan server) (Close name)
     tell server src dst content  = writeTChan (serverChan server) (Tell src content dst)
@@ -56,7 +56,7 @@ data InputMessage
 
 data ServerState = ServerState { clients :: Map String ClientConnection };
 
-worker :: ClientServer -> IO()
+worker :: ChatManager -> IO()
 worker server = loop (ServerState empty) where
     loop state = do
         msg <- atomically $ readTChan (serverChan server)
