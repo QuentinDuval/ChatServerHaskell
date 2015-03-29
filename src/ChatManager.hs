@@ -71,13 +71,13 @@ handleInput state Hello{..} = do
     let from = clientName client
     putStrLn $ "Log in user: " ++ from
     let newState = ServerState { clients = insert from client (clients state) }
-    mapM_ (\c -> notifyNewConnection c from) $ elems (clients state)
+    mapM_ (\c -> notifyNewConnection c from) $ elems (clients newState)
     return (True, newState)
 
 handleInput state Close{..} = do
     putStrLn $ "Log off user: " ++ from
     let newState = ServerState { clients = delete from (clients state) }
-    mapM_ (\c -> notifyDisconnection c from) $ elems (clients state)
+    mapM_ (\c -> notifyDisconnection c from) $ elems (clients newState)
     return (True, newState)
 
 handleInput state Tell{..} = do
