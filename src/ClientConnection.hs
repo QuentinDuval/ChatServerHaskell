@@ -44,12 +44,11 @@ closeClient client = atomically $ writeTChan (inputChan client) Shut
 sendToClient :: ClientConnection -> String -> String -> IO()
 sendToClient client src text = atomically $ writeTChan (inputChan client) (Message src text)
 
-notifyNewConnection :: ClientConnection -> String -> IO()
-notifyNewConnection client src = atomically $ writeTChan (inputChan client) (NewConnection src)
+notifyNewConnection :: String -> ClientConnection -> IO()
+notifyNewConnection src client = atomically $ writeTChan (inputChan client) (NewConnection src)
 
-notifyDisconnection :: ClientConnection -> String -> IO()
-notifyDisconnection client src = atomically $ writeTChan (inputChan client) (Disconnection src)
-
+notifyDisconnection :: String -> ClientConnection -> IO()
+notifyDisconnection src client = atomically $ writeTChan (inputChan client) (Disconnection src)
 
 
 -- ^ Private data and function
@@ -59,6 +58,7 @@ data OutputMessage
     | NewConnection { from :: String }
     | Disconnection { from :: String }
     | Shut
+
 
 clientSetup :: (IManager server) => Login -> server -> Handle -> IO ()
 clientSetup login server socket = do
