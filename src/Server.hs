@@ -28,6 +28,7 @@ serverLoop socketServer clientManager = do
     forever $ do
         (h, _, _) <- accept socketServer
         hSetBuffering h LineBuffering
+        putStrLn "Connection accepted..."
         newClient login clientManager h
 
 
