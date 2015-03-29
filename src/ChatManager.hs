@@ -68,25 +68,28 @@ worker server = loop (ServerState empty) where
 handleInput :: ServerState -> InputMessage -> IO (Bool, ServerState)
 
 handleInput state Hello{..} = do
-    putStrLn $ "Log in user: " ++ clientName client
-    let newState = ServerState { clients = insert (clientName client) client (clients state) }
+    let from = clientName client
+    putStrLn $ "Log in user: " ++ from
+    let newState = ServerState { clients = insert from client (clients state) }
+    mapM_ (\c -> notifyNewConnection c from) $ elems (clients state)
     return (True, newState)
 
 handleInput state Close{..} = do
     putStrLn $ "Log off user: " ++ from
     let newState = ServerState { clients = delete from (clients state) }
+    mapM_ (\c -> notifyDisconnection c from) $ elems (clients state)
     return (True, newState)
 
 handleInput state Tell{..} = do
     let found = Data.Map.lookup to (clients state)
-    when (isJust found) $ atomically $ sendToClient (fromJust found) from text 
+    when (isJust found) $ sendToClient (fromJust found) from text 
     return (True, state)
 
 handleInput state BroadCast{..} = do
-    mapM_ (\c -> atomically $ sendToClient c from text) $ elems (clients state)
+    mapM_ (\c -> sendToClient c from text) $ elems (clients state)
     return (True, state)
 
 handleInput state ServerShut = do
-    mapM_ (atomically . closeClient) $ elems (clients state)
+    mapM_ closeClient $ elems (clients state)
     return (False, state)
 

@@ -4,7 +4,9 @@ module ClientConnection
     IManager(..),
     newClient,
     closeClient,
-    sendToClient
+    sendToClient,
+    notifyNewConnection,
+    notifyDisconnection
 )
 where
 
@@ -36,16 +38,27 @@ class IManager server where
 newClient :: (IManager m) => Login -> m -> Handle -> IO()
 newClient login server h = void $ forkFinally (clientSetup login server h) (\_ -> hClose h)
 
-closeClient :: ClientConnection -> STM()
-closeClient client = writeTChan (inputChan client) Shut
+closeClient :: ClientConnection -> IO()
+closeClient client = atomically $ writeTChan (inputChan client) Shut
 
-sendToClient :: ClientConnection -> String -> String -> STM()
-sendToClient client src text = writeTChan (inputChan client) (Message src text)
+sendToClient :: ClientConnection -> String -> String -> IO()
+sendToClient client src text = atomically $ writeTChan (inputChan client) (Message src text)
+
+notifyNewConnection :: ClientConnection -> String -> IO()
+notifyNewConnection client src = atomically $ writeTChan (inputChan client) (NewConnection src)
+
+notifyDisconnection :: ClientConnection -> String -> IO()
+notifyDisconnection client src = atomically $ writeTChan (inputChan client) (Disconnection src)
+
 
 
 -- ^ Private data and function
 
-data OutputMessage = Message { from :: String, text :: String} | Shut
+data OutputMessage
+    = Message { from :: String, text :: String}
+    | NewConnection { from :: String }
+    | Disconnection { from :: String }
+    | Shut
 
 clientSetup :: (IManager server) => Login -> server -> Handle -> IO ()
 clientSetup login server socket = do
@@ -82,13 +95,10 @@ clientLoop this server socket = void $ race sendLoop receiveLoop where
 
 
 sendMessage :: Handle -> OutputMessage -> IO Bool
-sendMessage socket Message{..} = do
-    let message = "/message " ++ from ++ " " ++ text
-    hPutStrLn socket message
-    return True
-sendMessage socket Shut = do
-    hPutStrLn socket "/shut"
-    return False
+sendMessage h Message{..} =       hPutStrLn h ("/message " ++ from ++ " " ++ text) >> return True
+sendMessage h NewConnection{..} = hPutStrLn h ("/newconnection " ++ from) >> return False
+sendMessage h Disconnection{..} = hPutStrLn h ("/disconnection " ++ from) >> return False
+sendMessage h Shut =              hPutStrLn h "/shut" >> return False
 
 
 handleMessage :: (IManager server) => String -> server -> String -> IO Bool
