@@ -70,8 +70,8 @@ handleInput :: ServerState -> InputMessage -> IO (Bool, ServerState)
 handleInput state Hello{..} = do
     let from = clientName client
     putStrLn $ "Log in user: " ++ from
+    mapM_ (notifyNewConnection from) $ elems (clients state)
     let newState = ServerState { clients = insert from client (clients state) }
-    mapM_ (notifyNewConnection from) $ elems (clients newState)
     return (True, newState)
 
 handleInput state Close{..} = do

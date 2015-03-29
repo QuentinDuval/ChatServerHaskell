@@ -86,6 +86,7 @@ clientLoop this server socket = void $ race sendLoop receiveLoop where
     chan = inputChan this
     receiveLoop = do
         msg <- hGetLine socket --TODO handle exception ? socket broken suddenly
+        putStrLn msg
         !continue <- handleMessage (clientName this) server msg
         when continue receiveLoop
     sendLoop = do
@@ -96,8 +97,8 @@ clientLoop this server socket = void $ race sendLoop receiveLoop where
 
 sendMessage :: Handle -> OutputMessage -> IO Bool
 sendMessage h Message{..} =       hPutStrLn h ("/message " ++ from ++ " " ++ text) >> return True
-sendMessage h NewConnection{..} = hPutStrLn h ("/newconnection " ++ from) >> return False
-sendMessage h Disconnection{..} = hPutStrLn h ("/disconnection " ++ from) >> return False
+sendMessage h NewConnection{..} = hPutStrLn h ("/newconnection " ++ from) >> return True
+sendMessage h Disconnection{..} = hPutStrLn h ("/disconnection " ++ from) >> return True
 sendMessage h Shut =              hPutStrLn h "/shut" >> return False
 
 
