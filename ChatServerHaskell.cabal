@@ -15,7 +15,6 @@ executable ChatServerHaskell
                    async >=2.0 && <2.1
   ghc-options:     -Wall -O2 -threaded -rtsopts
   other-modules:   
-                   Server,
                    ClientConnection,
                    AutoCloseable,
                    Login,
